@@ -18,12 +18,13 @@ class BlockOnSpring(PhysicsModule):
         self.spring_constant = input_data.get('spring_constant', 1)
         self.push = owner.find_tool_by_name(input_data["pusher"]).push
 
+        self._resources_to_share = {
+            "Block:position": self.position,
+            "Block:momentum": self.momentum
+        }
+
     def initialize(self):
         self.position[:] = np.array(self._input_data["x0"])
-
-    def exchange_resources(self):
-        self.publish_resource({"Block:position": self.position})
-        self.publish_resource({"Block:momentum": self.momentum})
 
     def update(self):
         self.push(self.position, self.momentum,
@@ -38,9 +39,7 @@ class BlockDiagnostic(Diagnostic):
         self.output_function = None
         self.csv = None
 
-    def inspect_resource(self, resource):
-        if "Block:" + self.component in resource:
-            self.data = resource["Block:" + self.component]
+        self._needed_resources = {"Block:" + self.component: "data"}
 
     def diagnose(self):
         self.output_function(self.data[0, :])
